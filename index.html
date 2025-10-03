@@ -108,6 +108,13 @@
             </svg>
         );
 
+        // Icône EyeOff
+        const EyeOff = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+        );
+
         // Fonctions pour les sons
         const playSound = (frequency, duration) => {
             try {
@@ -168,6 +175,7 @@
             const [eliminatedByP2, setEliminatedByP2] = useState([]);
             const [gameCurrentPlayer, setGameCurrentPlayer] = useState(1);
             const [roundWinner, setRoundWinner] = useState(null);
+            const [secretRevealed, setSecretRevealed] = useState(false);
 
             const timerRef = useRef(null);
 
@@ -246,9 +254,11 @@
             const revealAndStartGame = (player) => {
                 if (player === 1) {
                     setCurrentPlayer(2);
+                    setSecretRevealed(false);
                 } else {
                     setPhase('game');
                     setGameCurrentPlayer(1);
+                    setSecretRevealed(false);
                 }
             };
 
@@ -590,14 +600,32 @@
                                         <div className="bg-blue-50 border-4 border-blue-500 rounded-2xl p-8 text-center">
                                             <h2 className="text-2xl font-bold text-blue-600 mb-4">{player1Name || 'Joueur 1'}</h2>
                                             <p className="text-gray-700 mb-4">Ton personnage secret (que {player2Name || 'le Joueur 2'} doit deviner) :</p>
-                                            <p className="text-5xl font-bold text-blue-600 capitalize mb-6">{player1Secret}</p>
-                                            <p className="text-sm text-gray-600 mb-6">Mémorise-le bien !</p>
-                                            <button
-                                                onClick={() => revealAndStartGame(1)}
-                                                className="px-8 py-3 bg-blue-500 text-white rounded-lg font-bold text-lg hover:bg-blue-600 transition-all"
-                                            >
-                                                J'ai mémorisé - Passer à {player2Name || 'Joueur 2'}
-                                            </button>
+                                            
+                                            {!secretRevealed ? (
+                                                <div>
+                                                    <div className="text-5xl font-bold text-blue-400 mb-6 tracking-widest">
+                                                        {'*'.repeat(player1Secret.length)}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setSecretRevealed(true)}
+                                                        className="px-8 py-3 bg-blue-500 text-white rounded-lg font-bold text-lg hover:bg-blue-600 transition-all inline-flex items-center gap-2"
+                                                    >
+                                                        <Eye className="w-5 h-5" />
+                                                        Révéler mon personnage
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <p className="text-5xl font-bold text-blue-600 capitalize mb-6">{player1Secret}</p>
+                                                    <p className="text-sm text-gray-600 mb-6">Mémorise-le bien !</p>
+                                                    <button
+                                                        onClick={() => revealAndStartGame(1)}
+                                                        className="px-8 py-3 bg-blue-500 text-white rounded-lg font-bold text-lg hover:bg-blue-600 transition-all"
+                                                    >
+                                                        J'ai mémorisé - Passer à {player2Name || 'Joueur 2'}
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -607,14 +635,32 @@
                                         <div className="bg-pink-50 border-4 border-pink-500 rounded-2xl p-8 text-center">
                                             <h2 className="text-2xl font-bold text-pink-600 mb-4">{player2Name || 'Joueur 2'}</h2>
                                             <p className="text-gray-700 mb-4">Ton personnage secret (que {player1Name || 'le Joueur 1'} doit deviner) :</p>
-                                            <p className="text-5xl font-bold text-pink-600 capitalize mb-6">{player2Secret}</p>
-                                            <p className="text-sm text-gray-600 mb-6">Mémorise-le bien !</p>
-                                            <button
-                                                onClick={() => revealAndStartGame(2)}
-                                                className="px-8 py-3 bg-pink-500 text-white rounded-lg font-bold text-lg hover:bg-pink-600 transition-all"
-                                            >
-                                                J'ai mémorisé - Commencer le jeu
-                                            </button>
+                                            
+                                            {!secretRevealed ? (
+                                                <div>
+                                                    <div className="text-5xl font-bold text-pink-400 mb-6 tracking-widest">
+                                                        {'*'.repeat(player2Secret.length)}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setSecretRevealed(true)}
+                                                        className="px-8 py-3 bg-pink-500 text-white rounded-lg font-bold text-lg hover:bg-pink-600 transition-all inline-flex items-center gap-2"
+                                                    >
+                                                        <Eye className="w-5 h-5" />
+                                                        Révéler mon personnage
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <p className="text-5xl font-bold text-pink-600 capitalize mb-6">{player2Secret}</p>
+                                                    <p className="text-sm text-gray-600 mb-6">Mémorise-le bien !</p>
+                                                    <button
+                                                        onClick={() => revealAndStartGame(2)}
+                                                        className="px-8 py-3 bg-pink-500 text-white rounded-lg font-bold text-lg hover:bg-pink-600 transition-all"
+                                                    >
+                                                        J'ai mémorisé - Commencer le jeu
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
