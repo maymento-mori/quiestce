@@ -8,12 +8,48 @@
     <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .dark-mode {
+            background: linear-gradient(to bottom right, #1a1a2e, #16213e) !important;
+        }
+        .dark-mode .bg-white {
+            background-color: #1f2937 !important;
+            color: #f3f4f6 !important;
+        }
+        .dark-mode .text-gray-800 {
+            color: #f3f4f6 !important;
+        }
+        .dark-mode .text-gray-700 {
+            color: #d1d5db !important;
+        }
+        .dark-mode .text-gray-600 {
+            color: #9ca3af !important;
+        }
+        .dark-mode .bg-gray-100 {
+            background-color: #374151 !important;
+        }
+        .dark-mode .bg-gray-50 {
+            background-color: #374151 !important;
+        }
+        .dark-mode .border-gray-300 {
+            border-color: #4b5563 !important;
+        }
+        .dark-mode .bg-blue-50 {
+            background-color: #1e3a5f !important;
+        }
+        .dark-mode .bg-pink-50 {
+            background-color: #5f1e3a !important;
+        }
+        .dark-mode .bg-orange-100 {
+            background-color: #7c3a1e !important;
+        }
+    </style>
 </head>
 <body>
     <div id="root"></div>
     
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect, useRef } = React;
 
         // Icône Users
         const Users = ({ className }) => (
@@ -44,6 +80,71 @@
             </svg>
         );
 
+        // Icône Moon
+        const Moon = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+        );
+
+        // Icône Sun
+        const Sun = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        );
+
+        // Icône Undo
+        const Undo = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+        );
+
+        // Icône Clock
+        const Clock = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        // Fonctions pour les sons
+        const playSound = (frequency, duration) => {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        };
+
+        const playEliminateSound = () => playSound(300, 0.1);
+        const playVictorySound = () => {
+            playSound(523, 0.15);
+            setTimeout(() => playSound(659, 0.15), 150);
+            setTimeout(() => playSound(784, 0.3), 300);
+        };
+        const playTimerSound = () => playSound(800, 0.2);
+
+        const vibrate = (pattern) => {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        };
+
         const GuessWhoGame = () => {
             const [phase, setPhase] = useState('config');
             const [totalRounds, setTotalRounds] = useState(3);
@@ -52,6 +153,10 @@
             const [player2Score, setPlayer2Score] = useState(0);
             const [player1Name, setPlayer1Name] = useState('');
             const [player2Name, setPlayer2Name] = useState('');
+            const [darkMode, setDarkMode] = useState(false);
+            const [timerEnabled, setTimerEnabled] = useState(false);
+            const [timeLeft, setTimeLeft] = useState(120);
+            const [lastElimination, setLastElimination] = useState(null);
             
             const [currentPlayer, setCurrentPlayer] = useState(1);
             const [nameInput, setNameInput] = useState('');
@@ -63,6 +168,35 @@
             const [eliminatedByP2, setEliminatedByP2] = useState([]);
             const [gameCurrentPlayer, setGameCurrentPlayer] = useState(1);
             const [roundWinner, setRoundWinner] = useState(null);
+
+            const timerRef = useRef(null);
+
+            // Timer
+            useEffect(() => {
+                if (phase === 'game' && timerEnabled && timeLeft > 0) {
+                    timerRef.current = setInterval(() => {
+                        setTimeLeft(prev => {
+                            if (prev <= 1) {
+                                playTimerSound();
+                                vibrate(200);
+                                checkWinner();
+                                return 120;
+                            }
+                            if (prev === 11) {
+                                playTimerSound();
+                            }
+                            return prev - 1;
+                        });
+                    }, 1000);
+                    return () => clearInterval(timerRef.current);
+                }
+            }, [phase, timerEnabled, timeLeft, gameCurrentPlayer]);
+
+            const formatTime = (seconds) => {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
 
             const startGame = () => {
                 if (totalRounds < 1) {
@@ -119,19 +253,38 @@
             };
 
             const toggleEliminate = (name) => {
+                playEliminateSound();
+                vibrate(50);
+                
                 if (gameCurrentPlayer === 1) {
                     if (eliminatedByP1.includes(name)) {
                         setEliminatedByP1(eliminatedByP1.filter(n => n !== name));
+                        setLastElimination(null);
                     } else {
+                        setLastElimination({ player: 1, name });
                         setEliminatedByP1([...eliminatedByP1, name]);
                     }
                 } else {
                     if (eliminatedByP2.includes(name)) {
                         setEliminatedByP2(eliminatedByP2.filter(n => n !== name));
+                        setLastElimination(null);
                     } else {
+                        setLastElimination({ player: 2, name });
                         setEliminatedByP2([...eliminatedByP2, name]);
                     }
                 }
+            };
+
+            const undoLastElimination = () => {
+                if (!lastElimination) return;
+                
+                playSound(400, 0.1);
+                if (lastElimination.player === 1) {
+                    setEliminatedByP1(eliminatedByP1.filter(n => n !== lastElimination.name));
+                } else {
+                    setEliminatedByP2(eliminatedByP2.filter(n => n !== lastElimination.name));
+                }
+                setLastElimination(null);
             };
 
             const checkWinner = () => {
@@ -179,10 +332,16 @@
                 }
 
                 if (winner) {
+                    playVictorySound();
+                    vibrate([200, 100, 200]);
                     setRoundWinner(winner);
                     setPhase('roundEnd');
+                    setTimeLeft(120);
+                    clearInterval(timerRef.current);
                 } else {
                     setGameCurrentPlayer(gameCurrentPlayer === 1 ? 2 : 1);
+                    setTimeLeft(120);
+                    setLastElimination(null);
                 }
             };
 
@@ -200,8 +359,12 @@
                     setGameCurrentPlayer(1);
                     setRoundWinner(null);
                     setError('');
+                    setTimeLeft(120);
+                    setLastElimination(null);
                 } else {
                     setPhase('gameEnd');
+                    playVictorySound();
+                    vibrate([300, 100, 300, 100, 300]);
                 }
             };
 
@@ -223,11 +386,22 @@
                 setEliminatedByP2([]);
                 setGameCurrentPlayer(1);
                 setRoundWinner(null);
+                setTimeLeft(120);
+                setLastElimination(null);
+                clearInterval(timerRef.current);
             };
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-500 p-4">
+                <div className={`min-h-screen p-4 ${darkMode ? 'dark-mode' : 'bg-gradient-to-br from-purple-500 to-pink-500'}`}>
                     <div className="max-w-2xl mx-auto">
+                        
+                        {/* Bouton mode sombre - toujours visible */}
+                        <button
+                            onClick={() => setDarkMode(!darkMode)}
+                            className="fixed top-4 right-4 p-3 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:scale-110 transition-transform z-50"
+                        >
+                            {darkMode ? <Sun className="w-6 h-6 text-yellow-400" /> : <Moon className="w-6 h-6 text-gray-700" />}
+                        </button>
                         
                         {phase === 'config' && (
                             <div className="bg-white rounded-2xl shadow-2xl p-8">
@@ -276,6 +450,23 @@
                                             onChange={(e) => setTotalRounds(parseInt(e.target.value) || 1)}
                                             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-2xl text-center font-bold"
                                         />
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <Clock className="w-6 h-6 text-gray-600" />
+                                            <span className="font-medium text-gray-700">Timer (2 min par tour)</span>
+                                        </div>
+                                        <button
+                                            onClick={() => setTimerEnabled(!timerEnabled)}
+                                            className={`px-6 py-2 rounded-lg font-bold transition-all ${
+                                                timerEnabled 
+                                                ? 'bg-green-500 text-white' 
+                                                : 'bg-gray-300 text-gray-600'
+                                            }`}
+                                        >
+                                            {timerEnabled ? 'ON' : 'OFF'}
+                                        </button>
                                     </div>
 
                                     {error && (
@@ -447,7 +638,25 @@
                                             Tour de {gameCurrentPlayer === 1 ? (player1Name || 'Joueur 1') : (player2Name || 'Joueur 2')}
                                         </h2>
                                     </div>
+                                    
+                                    {timerEnabled && (
+                                        <div className={`text-4xl font-bold mb-4 ${timeLeft <= 10 ? 'text-red-600 animate-pulse' : 'text-gray-700'}`}>
+                                            <Clock className="w-8 h-8 inline mr-2" />
+                                            {formatTime(timeLeft)}
+                                        </div>
+                                    )}
+                                    
                                     <p className="text-gray-600 mb-4">Clique sur les personnages pour les éliminer</p>
+                                    
+                                    {lastElimination && lastElimination.player === gameCurrentPlayer && (
+                                        <button
+                                            onClick={undoLastElimination}
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors mb-4"
+                                        >
+                                            <Undo className="w-4 h-4" />
+                                            Annuler "{lastElimination.name}"
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-3 mb-6">
