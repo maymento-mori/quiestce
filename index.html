@@ -348,12 +348,14 @@
             const nextRound = () => {
                 if (currentRound < totalRounds) {
                     setCurrentRound(currentRound + 1);
-                    setPhase('setup');
+                    
+                    // Réutiliser les mêmes prénoms
+                    const shuffled = [...allNames].sort(() => Math.random() - 0.5);
+                    setPlayer1Secret(shuffled[0]);
+                    setPlayer2Secret(shuffled[1]);
+                    setPhase('assignSecret');
                     setCurrentPlayer(1);
-                    setNameInput('');
-                    setAllNames([]);
-                    setPlayer1Secret('');
-                    setPlayer2Secret('');
+                    
                     setEliminatedByP1([]);
                     setEliminatedByP2([]);
                     setGameCurrentPlayer(1);
