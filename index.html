@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qui est-ce? - Jeu 2 Joueurs</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
@@ -50,6 +50,8 @@
             const [currentRound, setCurrentRound] = useState(1);
             const [player1Score, setPlayer1Score] = useState(0);
             const [player2Score, setPlayer2Score] = useState(0);
+            const [player1Name, setPlayer1Name] = useState('');
+            const [player2Name, setPlayer2Name] = useState('');
             
             const [currentPlayer, setCurrentPlayer] = useState(1);
             const [nameInput, setNameInput] = useState('');
@@ -65,6 +67,10 @@
             const startGame = () => {
                 if (totalRounds < 1) {
                     setError('Choisissez au moins 1 partie');
+                    return;
+                }
+                if (!player1Name.trim() || !player2Name.trim()) {
+                    setError('Veuillez entrer les noms des deux joueurs');
                     return;
                 }
                 setPhase('setup');
@@ -138,7 +144,7 @@
                 const p2Wrong = p2Remaining.length === 1 && p2Remaining[0] !== player1Secret;
 
                 let winner = null;
-                const resultMessage = `Joueur 1 devait deviner "${player2Secret}" et Joueur 2 devait deviner "${player1Secret}"`;
+                const resultMessage = `${player1Name || 'Joueur 1'} devait deviner "${player2Secret}" et ${player2Name || 'Joueur 2'} devait deviner "${player1Secret}"`;
                 
                 if (p1Wrong && p2Remaining.length > 1) {
                     setPlayer2Score(player2Score + 1);
@@ -205,6 +211,8 @@
                 setCurrentRound(1);
                 setPlayer1Score(0);
                 setPlayer2Score(0);
+                setPlayer1Name('');
+                setPlayer2Name('');
                 setCurrentPlayer(1);
                 setNameInput('');
                 setAllNames([]);
@@ -230,6 +238,32 @@
                                 </div>
 
                                 <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-lg font-medium text-gray-700 mb-3">
+                                            Nom du Joueur 1
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={player1Name}
+                                            onChange={(e) => setPlayer1Name(e.target.value)}
+                                            className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none text-xl text-center font-semibold"
+                                            placeholder="Ex: Alice"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-lg font-medium text-gray-700 mb-3">
+                                            Nom du Joueur 2
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={player2Name}
+                                            onChange={(e) => setPlayer2Name(e.target.value)}
+                                            className="w-full px-4 py-3 border-2 border-pink-300 rounded-lg focus:border-pink-500 focus:outline-none text-xl text-center font-semibold"
+                                            placeholder="Ex: Bob"
+                                        />
+                                    </div>
+
                                     <div>
                                         <label className="block text-lg font-medium text-gray-700 mb-3">
                                             Combien de manches voulez-vous jouer ?
@@ -264,14 +298,14 @@
                             <div className="bg-white rounded-xl shadow-lg p-4 mb-4">
                                 <div className="flex justify-between items-center">
                                     <div className="text-center flex-1">
-                                        <p className="text-sm text-gray-600">Joueur 1</p>
+                                        <p className="text-sm text-gray-600">{player1Name || 'Joueur 1'}</p>
                                         <p className="text-3xl font-bold text-blue-600">{player1Score}</p>
                                     </div>
                                     <div className="text-center flex-1">
                                         <p className="text-lg font-bold text-gray-700">Manche {currentRound}/{totalRounds}</p>
                                     </div>
                                     <div className="text-center flex-1">
-                                        <p className="text-sm text-gray-600">Joueur 2</p>
+                                        <p className="text-sm text-gray-600">{player2Name || 'Joueur 2'}</p>
                                         <p className="text-3xl font-bold text-pink-600">{player2Score}</p>
                                     </div>
                                 </div>
@@ -293,7 +327,7 @@
                                         <span className={`px-4 py-2 rounded-full font-bold ${
                                             currentPlayer === 1 ? 'bg-blue-500 text-white' : 'bg-pink-500 text-white'
                                         }`}>
-                                            Joueur {currentPlayer}
+                                            {currentPlayer === 1 ? player1Name || 'Joueur 1' : player2Name || 'Joueur 2'}
                                         </span>
                                     </div>
                                     
@@ -361,15 +395,15 @@
                                 {currentPlayer === 1 && (
                                     <div className="space-y-6">
                                         <div className="bg-blue-50 border-4 border-blue-500 rounded-2xl p-8 text-center">
-                                            <h2 className="text-2xl font-bold text-blue-600 mb-4">Joueur 1</h2>
-                                            <p className="text-gray-700 mb-4">Ton personnage secret (que le Joueur 2 doit deviner) :</p>
+                                            <h2 className="text-2xl font-bold text-blue-600 mb-4">{player1Name || 'Joueur 1'}</h2>
+                                            <p className="text-gray-700 mb-4">Ton personnage secret (que {player2Name || 'le Joueur 2'} doit deviner) :</p>
                                             <p className="text-5xl font-bold text-blue-600 capitalize mb-6">{player1Secret}</p>
                                             <p className="text-sm text-gray-600 mb-6">Mémorise-le bien !</p>
                                             <button
                                                 onClick={() => revealAndStartGame(1)}
                                                 className="px-8 py-3 bg-blue-500 text-white rounded-lg font-bold text-lg hover:bg-blue-600 transition-all"
                                             >
-                                                J'ai mémorisé - Passer au Joueur 2
+                                                J'ai mémorisé - Passer à {player2Name || 'Joueur 2'}
                                             </button>
                                         </div>
                                     </div>
@@ -378,8 +412,8 @@
                                 {currentPlayer === 2 && (
                                     <div className="space-y-6 transform rotate-180">
                                         <div className="bg-pink-50 border-4 border-pink-500 rounded-2xl p-8 text-center">
-                                            <h2 className="text-2xl font-bold text-pink-600 mb-4">Joueur 2</h2>
-                                            <p className="text-gray-700 mb-4">Ton personnage secret (que le Joueur 1 doit deviner) :</p>
+                                            <h2 className="text-2xl font-bold text-pink-600 mb-4">{player2Name || 'Joueur 2'}</h2>
+                                            <p className="text-gray-700 mb-4">Ton personnage secret (que {player1Name || 'le Joueur 1'} doit deviner) :</p>
                                             <p className="text-5xl font-bold text-pink-600 capitalize mb-6">{player2Secret}</p>
                                             <p className="text-sm text-gray-600 mb-6">Mémorise-le bien !</p>
                                             <button
@@ -410,7 +444,7 @@
                                         <h2 className={`text-2xl font-bold ${
                                             gameCurrentPlayer === 1 ? 'text-blue-600' : 'text-pink-600'
                                         }`}>
-                                            Tour du Joueur {gameCurrentPlayer}
+                                            Tour de {gameCurrentPlayer === 1 ? (player1Name || 'Joueur 1') : (player2Name || 'Joueur 2')}
                                         </h2>
                                     </div>
                                     <p className="text-gray-600 mb-4">Clique sur les personnages pour les éliminer</p>
@@ -490,12 +524,12 @@
                                     )}
                                     {roundWinner === 1 && (
                                         <div>
-                                            <p className="text-2xl text-blue-600 font-bold mb-2">🎉 Le Joueur 1 gagne ! 🎉</p>
+                                            <p className="text-2xl text-blue-600 font-bold mb-2">🎉 {player1Name || 'Le Joueur 1'} gagne ! 🎉</p>
                                         </div>
                                     )}
                                     {roundWinner === 2 && (
                                         <div>
-                                            <p className="text-2xl text-pink-600 font-bold mb-2">🎉 Le Joueur 2 gagne ! 🎉</p>
+                                            <p className="text-2xl text-pink-600 font-bold mb-2">🎉 {player2Name || 'Le Joueur 2'} gagne ! 🎉</p>
                                         </div>
                                     )}
                                 </div>
@@ -504,11 +538,11 @@
                                     <h3 className="text-xl font-bold text-gray-700 mb-4 text-center">Score actuel</h3>
                                     <div className="flex justify-around">
                                         <div className="text-center">
-                                            <p className="text-sm text-gray-600 mb-2">Joueur 1</p>
+                                            <p className="text-sm text-gray-600 mb-2">{player1Name || 'Joueur 1'}</p>
                                             <p className="text-5xl font-bold text-blue-600">{player1Score}</p>
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-sm text-gray-600 mb-2">Joueur 2</p>
+                                            <p className="text-sm text-gray-600 mb-2">{player2Name || 'Joueur 2'}</p>
                                             <p className="text-5xl font-bold text-pink-600">{player2Score}</p>
                                         </div>
                                     </div>
@@ -530,10 +564,10 @@
                                     <h1 className="text-4xl font-bold text-gray-800 mb-4">Partie terminée !</h1>
                                     
                                     {player1Score > player2Score && (
-                                        <p className="text-3xl font-bold text-blue-600 mb-2">🎉 Le Joueur 1 remporte la partie ! 🎉</p>
+                                        <p className="text-3xl font-bold text-blue-600 mb-2">🎉 {player1Name || 'Le Joueur 1'} remporte la partie ! 🎉</p>
                                     )}
                                     {player2Score > player1Score && (
-                                        <p className="text-3xl font-bold text-pink-600 mb-2">🎉 Le Joueur 2 remporte la partie ! 🎉</p>
+                                        <p className="text-3xl font-bold text-pink-600 mb-2">🎉 {player2Name || 'Le Joueur 2'} remporte la partie ! 🎉</p>
                                     )}
                                     {player1Score === player2Score && (
                                         <p className="text-3xl font-bold text-gray-700 mb-2">🤝 Égalité parfaite ! 🤝</p>
@@ -544,11 +578,11 @@
                                     <h3 className="text-2xl font-bold text-gray-700 mb-6 text-center">Score final</h3>
                                     <div className="flex justify-around">
                                         <div className="text-center">
-                                            <p className="text-lg text-gray-600 mb-2">Joueur 1</p>
+                                            <p className="text-lg text-gray-600 mb-2">{player1Name || 'Joueur 1'}</p>
                                             <p className="text-6xl font-bold text-blue-600">{player1Score}</p>
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-lg text-gray-600 mb-2">Joueur 2</p>
+                                            <p className="text-lg text-gray-600 mb-2">{player2Name || 'Joueur 2'}</p>
                                             <p className="text-6xl font-bold text-pink-600">{player2Score}</p>
                                         </div>
                                     </div>
